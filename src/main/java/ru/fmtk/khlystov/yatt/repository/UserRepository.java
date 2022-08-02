@@ -8,4 +8,6 @@ import ru.fmtk.khlystov.yatt.domain.User;
 public interface UserRepository extends ReactiveCrudRepository<User, Long> {
 
     Mono<User> findUserByName(@Param("name") String name);
+
+    Mono<User> findUserByTelegramId(@Param("telegramId") long id);
 }

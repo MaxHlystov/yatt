@@ -24,6 +24,10 @@ spring:
       max-idle-time: 1m
       max-size: 30
 
+yatt:
+  bot:
+    name: Yet Another Task Tracker Bot
+
 #springdoc:
 #  swagger-ui:
 #    use-root-path: true

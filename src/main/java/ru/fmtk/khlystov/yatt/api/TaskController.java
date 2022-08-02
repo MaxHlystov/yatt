@@ -83,7 +83,7 @@ public class TaskController {
             @PathVariable("taskId") long taskId,
             @PathVariable(value = "assignee", required = false) String assignee
     ) {
-        return taskService.changeAssignee(taskId, assignee)
+        return taskService.changeAssigneeByName(taskId, assignee)
                 .flatMap(taskToDtoConverter::toDto);
     }
 

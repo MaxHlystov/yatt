@@ -34,6 +34,6 @@ public class UserToDtoConverter {
     }
 
     public User toEntity(UserDto userDto) {
-        return new User(userDto.getId(), userDto.getName());
+        return new User(userDto.getId(), userDto.getName(), null);
     }
 }

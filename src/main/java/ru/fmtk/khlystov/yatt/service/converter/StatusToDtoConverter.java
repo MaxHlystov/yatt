@@ -18,7 +18,7 @@ public class StatusToDtoConverter {
     }
 
     public Mono<StatusDto> toDto(Status status) {
-        return Mono.just(new StatusDto(status.getId(), status.getName()));
+        return Mono.just(new StatusDto(status.getId(), status.getName(), status.getDescription()));
     }
 
     public Mono<StatusDto> toDto(Long statusId) {
@@ -31,6 +31,6 @@ public class StatusToDtoConverter {
     }
 
     public Status toEntity(StatusDto statusDto) {
-        return new Status(statusDto.getId(), statusDto.getName());
+        return new Status(statusDto.getId(), statusDto.getName(), statusDto.getDescription());
     }
 }

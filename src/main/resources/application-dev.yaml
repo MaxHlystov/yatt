@@ -11,7 +11,9 @@ yatt:
     username: usr
     password: pwd
 
+
 logging:
   level:
+    ru.fmtk.khlystov.yatt: DEBUG
     web: DEBUG
-
+    sql: DEBUG

@@ -11,10 +11,12 @@ import lombok.ToString;
 @ToString
 public class StatusDto {
 
-    public static final StatusDto NULL_STATUS = new StatusDto(-1L, "NULL");
+    public static final StatusDto NULL_STATUS = new StatusDto(-1L, "NULL", null);
 
     private Long id;
 
     @NotEmpty
     private String name;
+
+    private String description;
 }

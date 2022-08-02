@@ -14,11 +14,13 @@ import org.springframework.data.relational.core.mapping.Table;
 @Table(name = "status", schema = "yatt")
 public class Status {
 
-    public static final Status NULL_STATUS = new Status(-1L, "NULL");
+    public static final Status NULL_STATUS = new Status(-1L, "NULL", null);
 
     @Id
     private Long id;
 
     @NotEmpty
     private String name;
+
+    private String description;
 }

@@ -70,7 +70,7 @@ public class UserController {
             @RequestBody UserDto userDto
     ) {
         return userRepository.findById(userId)
-                .flatMap(user -> userRepository.save(new User(userId, userDto.getName())))
+                .flatMap(user -> userRepository.save(new User(userId, userDto.getName(), null)))
                 .flatMap(userToDtoConverter::toDto);
     }
 

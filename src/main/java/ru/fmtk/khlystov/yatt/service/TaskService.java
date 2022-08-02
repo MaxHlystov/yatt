@@ -13,6 +13,7 @@ import ru.fmtk.khlystov.yatt.dto.CreateTaskDto;
 import ru.fmtk.khlystov.yatt.dto.TaskDto;
 import ru.fmtk.khlystov.yatt.dto.TaskFilterDto;
 import ru.fmtk.khlystov.yatt.exception.BadRequestException;
+import ru.fmtk.khlystov.yatt.repository.StatusRepository;
 import ru.fmtk.khlystov.yatt.repository.TaskRepository;
 import ru.fmtk.khlystov.yatt.repository.UserRepository;
 import ru.fmtk.khlystov.yatt.service.converter.TaskToDtoConverter;
@@ -21,17 +22,20 @@ import ru.fmtk.khlystov.yatt.service.converter.TaskToDtoConverter;
 public class TaskService {
     private final IdempotenceService idempotenceService;
     private final TaskRepository taskRepository;
+    private final StatusRepository statusRepository;
     private final UserRepository userRepository;
     private final TaskToDtoConverter taskToDtoConverter;
     private final TimeService timeService;
 
     public TaskService(IdempotenceService idempotenceService,
                        TaskRepository taskRepository,
+                       StatusRepository statusRepository,
                        UserRepository userRepository,
                        TaskToDtoConverter taskToDtoConverter,
                        TimeService timeService) {
         this.idempotenceService = idempotenceService;
         this.taskRepository = taskRepository;
+        this.statusRepository = statusRepository;
         this.userRepository = userRepository;
         this.taskToDtoConverter = taskToDtoConverter;
         this.timeService = timeService;
@@ -106,10 +110,37 @@ public class TaskService {
     }
 
     @Transactional
-    public Mono<Task> changeAssignee(long taskId, @Nullable String assignee) {
-        return taskRepository.setAssignee(taskId, assignee)
+    public Mono<Task> changeAssigneeByName(long taskId, @Nullable String assignee) {
+        return taskRepository.setAssigneeByName(taskId, assignee)
                 .switchIfEmpty(Mono.error(new BadRequestException(
                         "Task with id " + taskId + " was not found.")))
                 .then(taskRepository.findById(taskId));
+    }
+
+    public Flux<Task> findAllWithoutAssignee() {
+        return taskRepository.findAllByAssigneeIdIsNull();
+    }
+
+    public Flux<Task> findByUserTelegramIdAndStatus(long userTelegramId, String statusName) {
+        return userRepository.findUserByTelegramId(userTelegramId)
+                .zipWith(statusRepository.findByNameOrDescription(statusName, statusName))
+                .flatMapMany(userAndStatus ->
+                        taskRepository.findAllByAssigneeIdAndStatusId(
+                                userAndStatus.getT1().getId(), userAndStatus.getT2().getId()));
+    }
+
+    public Mono<TaskDto> findById(long taskId) {
+        return taskRepository.findById(taskId)
+                .flatMap(taskToDtoConverter::toDto);
+    }
+
+    public Mono<Boolean> changeAssigneeByTelegramUserId(long taskId, Long userTelegramId) {
+        return userRepository.findUserByTelegramId(userTelegramId)
+                .switchIfEmpty(Mono.error(new IllegalArgumentException("You need to register before take a task")))
+                .flatMap(user ->
+                        taskRepository.setAssigneeById(taskId, user.getId())
+                                .then(Mono.just(true))
+                                .switchIfEmpty(Mono.just(false))
+                );
     }
 }

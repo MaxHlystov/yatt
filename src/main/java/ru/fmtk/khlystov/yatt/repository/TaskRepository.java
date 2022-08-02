@@ -23,6 +23,9 @@ public interface TaskRepository extends ReactiveCrudRepository<Task, Long> {
             "where u.name = :assigneeName")
     Flux<Task> findAllByAssigneeName(@Param("assigneeName") String assigneeName);
 
+    Flux<Task> findAllByAssigneeIdAndStatusId(@Param("assigneeId") long assigneeId,
+                                               @Param("statusId") long statusId);
+
     Flux<Task> findAllByStatusIdIn(Set<Long> statusIds);
 
     @Modifying
@@ -33,7 +36,15 @@ public interface TaskRepository extends ReactiveCrudRepository<Task, Long> {
     @Query("update yatt.task as t " +
             "set assignee_id = u.id " +
             "from yatt.user as u " +
-            "where u.name = :assigneeId" +
+            "where u.name = :assignee" +
             "  and t.id = :taskId")
-    Mono<Long> setAssignee(@Param("taskId") long taskId, @Param("assigneeId") String assignee);
+    Mono<Long> setAssigneeByName(@Param("taskId") long taskId, @Param("assignee") String assignee);
+
+    @Modifying
+    @Query("update yatt.task as t " +
+            "set assignee_id = :assigneeId " +
+            "where t.id = :taskId")
+    Mono<Long> setAssigneeById(@Param("taskId") long taskId, @Param("assigneeId") long assigneeId);
+
+    Flux<Task> findAllByAssigneeIdIsNull();
 }
