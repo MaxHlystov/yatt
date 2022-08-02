@@ -18,6 +18,11 @@ import lombok.Setter;
 public class TaskDto {
     private static final String DATE_PATTERN = "yyyy-MM-dd HH:mm:ss.SSSSSS";
 
+    public static final TaskDto NULL_TASK = TaskDto.builder()
+            .id(-1L)
+            .name("NULL")
+            .build();
+
     private Long id;
 
     @NotEmpty
@@ -30,12 +35,12 @@ public class TaskDto {
 
     private UserDto assignee;
 
-    @JsonFormat(pattern=DATE_PATTERN)
+    @JsonFormat(pattern = DATE_PATTERN)
     private LocalDateTime createdAt;
 
     private UserDto createdBy;
 
-    @JsonFormat(pattern=DATE_PATTERN)
+    @JsonFormat(pattern = DATE_PATTERN)
     private LocalDateTime modifiedAt;
 
     private UserDto modifiedBy;

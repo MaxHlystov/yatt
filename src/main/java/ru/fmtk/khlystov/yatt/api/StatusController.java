@@ -27,6 +27,6 @@ public class StatusController {
     @GetMapping("/v1/status")
     public Flux<StatusDto> getAll() {
         return statusRepository.findAll()
-                .map(statusToDtoConverter::toDto);
+                .flatMap(statusToDtoConverter::toDto);
     }
 }

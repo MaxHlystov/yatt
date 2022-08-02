@@ -37,7 +37,7 @@ public class UserController {
     @GetMapping(value = "/v1/user", produces = MediaType.APPLICATION_NDJSON_VALUE)
     public Flux<UserDto> getUsers() {
         return userRepository.findAll()
-                .map(userToDtoConverter::toDto);
+                .flatMap(userToDtoConverter::toDto);
     }
 
     @ApiResponses(value = {
@@ -47,7 +47,7 @@ public class UserController {
     @GetMapping(value = "/v1/user/{id}", produces = MediaType.APPLICATION_NDJSON_VALUE)
     public Mono<UserDto> getUserById(@PathVariable(name = "id") Long userId) {
         return userRepository.findById(userId)
-                .map(userToDtoConverter::toDto);
+                .flatMap(userToDtoConverter::toDto);
     }
 
     @Operation(description = "Create user",
@@ -58,13 +58,7 @@ public class UserController {
             return Mono.error(new BadRequestException("User name has to be specified."));
         }
         return userRepository.findUserByName(userDto.getName())
-                .flatMap(user -> {
-                    if (user == null) {
-                        return userRepository.save(userToDtoConverter.toEntity(userDto));
-                    } else {
-                        return Mono.just(user);
-                    }
-                })
+                .switchIfEmpty(userRepository.save(userToDtoConverter.toEntity(userDto)))
                 .map(User::getId);
     }
 
@@ -77,7 +71,7 @@ public class UserController {
     ) {
         return userRepository.findById(userId)
                 .flatMap(user -> userRepository.save(new User(userId, userDto.getName())))
-                .map(userToDtoConverter::toDto);
+                .flatMap(userToDtoConverter::toDto);
     }
 
     @Operation(description = "Delete user",

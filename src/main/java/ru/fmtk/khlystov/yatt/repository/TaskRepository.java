@@ -14,9 +14,9 @@ public interface TaskRepository extends ReactiveCrudRepository<Task, Long> {
     @Query("select t.* from yatt.task as t " +
             "  inner join yatt.user as u on u.id = t.assignee_id " +
             "where u.name = :assigneeName " +
-            "  and t.status_id in :statusIds")
+            "  and t.status_id in (:statusIds)")
     Flux<Task> findAllByAssigneeNameAndStatusIdIn(@Param("assigneeName") String assigneeName,
-                                                    @Param("statusIds") Set<Long> statusIds);
+                                                  @Param("statusIds") Set<Long> statusIds);
 
     @Query("select t.* from yatt.task as t " +
             "  inner join yatt.user as u on u.id = t.assignee_id " +
@@ -27,9 +27,13 @@ public interface TaskRepository extends ReactiveCrudRepository<Task, Long> {
 
     @Modifying
     @Query("update yatt.task set status_id = :statusId where id = :taskId")
-    Mono<Task> updateStatus(@Param("taskId") long taskId, @Param("statusId") long statusId);
+    Mono<Long> updateStatus(@Param("taskId") long taskId, @Param("statusId") long statusId);
 
     @Modifying
-    @Query("update yatt.task set assignee_id = :assigneeId where id = :taskId")
-    Mono<Task> setAssignee(@Param("taskId") long taskId, @Param("assigneeId") Long assigneeId);
+    @Query("update yatt.task as t " +
+            "set assignee_id = u.id " +
+            "from yatt.user as u " +
+            "where u.name = :assigneeId" +
+            "  and t.id = :taskId")
+    Mono<Long> setAssignee(@Param("taskId") long taskId, @Param("assigneeId") String assignee);
 }

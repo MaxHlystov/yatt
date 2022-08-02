@@ -2,6 +2,8 @@ package ru.fmtk.khlystov.yatt.api;
 
 import javax.validation.Valid;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.constraints.NotEmpty;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.http.MediaType;
@@ -37,6 +39,8 @@ public class TaskController {
         this.taskToDtoConverter = taskToDtoConverter;
     }
 
+    @Operation(description = "Get all tasks by filter",
+            responses = {@ApiResponse(responseCode = "200", description = "get all tasks by filter")})
     @PostMapping(value = "/v1/task/filter", produces = MediaType.APPLICATION_NDJSON_VALUE)
     public Flux<TaskDto> getTasksByFilter(@RequestBody TaskFilterDto filter) {
         if (filter == null ||
@@ -44,37 +48,47 @@ public class TaskController {
             return Flux.error(new BadRequestException("Filter must be specified."));
         }
         return taskService.findByFilter(filter)
-                .map(taskToDtoConverter::toDto);
+                .flatMap(taskToDtoConverter::toDto);
     }
 
+    @Operation(description = "Create task",
+            responses = {@ApiResponse(responseCode = "200", description = "create task")})
     @PutMapping(value = "/v1/task", produces = MediaType.APPLICATION_NDJSON_VALUE)
     public Mono<TaskDto> createTask(@RequestHeader(YATT_CREATE_TASK_UID) @NotEmpty String createTaskUid,
                                     @RequestBody CreateTaskDto taskDto) {
         return taskService.create(createTaskUid, taskDto)
-                .map(taskToDtoConverter::toDto);
+                .flatMap(taskToDtoConverter::toDto);
     }
 
+    @Operation(description = "Change task",
+            responses = {@ApiResponse(responseCode = "200", description = "change task")})
     @PostMapping(value = "/v1/task", produces = MediaType.APPLICATION_NDJSON_VALUE)
     public Mono<TaskDto> changeTask(@RequestBody TaskDto taskDto) {
         return taskService.changeTask(taskDto)
-                .map(taskToDtoConverter::toDto);
+                .flatMap(taskToDtoConverter::toDto);
     }
 
+    @Operation(description = "Change status of the task",
+            responses = {@ApiResponse(responseCode = "200", description = "change task status")})
     @PostMapping(value = "/v1/task/{taskId}/status/{statusId}", produces = MediaType.APPLICATION_NDJSON_VALUE)
     public Mono<TaskDto> changeStatus(@PathVariable("taskId") long taskId, @PathVariable("statusId") long statusId) {
         return taskService.changeStatus(taskId, statusId)
-                .map(taskToDtoConverter::toDto);
+                .flatMap(taskToDtoConverter::toDto);
     }
 
-    @PostMapping(value = "/v1/task/{taskId}/assignee/{assigneeId}", produces = MediaType.APPLICATION_NDJSON_VALUE)
+    @Operation(description = "Change assignee of the task",
+            responses = {@ApiResponse(responseCode = "200", description = "change task assignee")})
+    @PostMapping(value = "/v1/task/{taskId}/assignee/{assignee}", produces = MediaType.APPLICATION_NDJSON_VALUE)
     public Mono<TaskDto> changeAssignee(
             @PathVariable("taskId") long taskId,
-            @PathVariable(value = "assigneeId", required = false) Long assigneeId
+            @PathVariable(value = "assignee", required = false) String assignee
     ) {
-        return taskService.changeAssignee(taskId, assigneeId)
-                .map(taskToDtoConverter::toDto);
+        return taskService.changeAssignee(taskId, assignee)
+                .flatMap(taskToDtoConverter::toDto);
     }
 
+    @Operation(description = "Delete task",
+            responses = {@ApiResponse(responseCode = "200", description = "delete task")})
     @DeleteMapping("/v1/task/{taskId}")
     public Mono<Void> deleteTask(@PathVariable("taskId") long taskId) {
         return taskService.delete(taskId).then();

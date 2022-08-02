@@ -10,6 +10,9 @@ import lombok.ToString;
 @Getter
 @ToString
 public class StatusDto {
+
+    public static final StatusDto NULL_STATUS = new StatusDto(-1L, "NULL");
+
     private Long id;
 
     @NotEmpty

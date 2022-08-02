@@ -12,6 +12,9 @@ import org.springframework.lang.NonNull;
 @ToString
 @Table(name = "user", schema = "yatt")
 public class User {
+
+    public static final User NULL_USER = new User(-1L, "NULL");
+
     @Id
     private Long id;
 

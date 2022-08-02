@@ -10,6 +10,9 @@ import lombok.Getter;
 @Getter
 @Builder
 public class UserDto {
+
+    public static final UserDto NULL_USER = new UserDto(-1L, "NULL");
+
     private Long id;
 
     @NotEmpty

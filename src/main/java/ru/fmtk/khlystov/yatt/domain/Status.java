@@ -13,6 +13,9 @@ import org.springframework.data.relational.core.mapping.Table;
 @ToString
 @Table(name = "status", schema = "yatt")
 public class Status {
+
+    public static final Status NULL_STATUS = new Status(-1L, "NULL");
+
     @Id
     private Long id;
 

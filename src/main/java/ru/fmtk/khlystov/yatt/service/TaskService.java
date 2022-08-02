@@ -5,33 +5,32 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import ru.fmtk.khlystov.yatt.domain.Status;
 import ru.fmtk.khlystov.yatt.domain.Task;
 import ru.fmtk.khlystov.yatt.dto.CreateTaskDto;
 import ru.fmtk.khlystov.yatt.dto.TaskDto;
 import ru.fmtk.khlystov.yatt.dto.TaskFilterDto;
 import ru.fmtk.khlystov.yatt.exception.BadRequestException;
-import ru.fmtk.khlystov.yatt.repository.CreateTaskUidRepository;
 import ru.fmtk.khlystov.yatt.repository.TaskRepository;
 import ru.fmtk.khlystov.yatt.repository.UserRepository;
 import ru.fmtk.khlystov.yatt.service.converter.TaskToDtoConverter;
 
 @Service
 public class TaskService {
-    private final CreateTaskUidRepository createTaskUidRepository;
+    private final IdempotenceService idempotenceService;
     private final TaskRepository taskRepository;
     private final UserRepository userRepository;
     private final TaskToDtoConverter taskToDtoConverter;
     private final TimeService timeService;
 
-    public TaskService(CreateTaskUidRepository createTaskUidRepository,
+    public TaskService(IdempotenceService idempotenceService,
                        TaskRepository taskRepository,
                        UserRepository userRepository,
                        TaskToDtoConverter taskToDtoConverter,
                        TimeService timeService) {
-        this.createTaskUidRepository = createTaskUidRepository;
+        this.idempotenceService = idempotenceService;
         this.taskRepository = taskRepository;
         this.userRepository = userRepository;
         this.taskToDtoConverter = taskToDtoConverter;
@@ -53,25 +52,28 @@ public class TaskService {
         throw new IllegalArgumentException("Filter must not be empty.");
     }
 
+    @Transactional
     public Mono<Task> create(@NonNull String createTaskUid, @NonNull CreateTaskDto taskDto) {
         if (StringUtils.isBlank(createTaskUid)) {
             return Mono.error(new BadRequestException("You have to specify create task uid to distinct different" +
                     " creations"));
         }
-        return createTaskUidRepository.insertIfNotExists(createTaskUid, timeService.getDateTime())
-                .flatMap(uid -> {
-                    if (uid == null) {
+        return idempotenceService.isExistsOrStore(createTaskUid)
+                .flatMap(isExists -> {
+                    if (isExists) {
                         return Mono.error(new BadRequestException("Creation with uid " + createTaskUid +
                                 " already exists."));
                     }
                     return userRepository.findUserByName(taskDto.getCreatorName())
+                            .switchIfEmpty(Mono.error(new BadRequestException("User with name " +
+                                    taskDto.getCreatorName() + " was not found.")))
                             .flatMap(user -> taskRepository.save(
                                     Task.builder()
                                             .name(taskDto.getName())
-                                            .status(new Status(1L, null))
+                                            .statusId(1L)
                                             .description(taskDto.getDescription())
                                             .createdAt(timeService.getDateTime())
-                                            .createdBy(user)
+                                            .createdBy(user.getId())
                                             .build()));
                 });
     }
@@ -80,11 +82,14 @@ public class TaskService {
         return taskRepository.deleteById(taskId);
     }
 
+    @Transactional
     public Mono<Task> changeTask(TaskDto taskDto) {
         if (taskDto.getId() == null) {
             return Mono.error(new BadRequestException("To change task you need to specify id."));
         }
         return taskRepository.findById(taskDto.getId())
+                .switchIfEmpty(Mono.error(new BadRequestException(
+                        "Task with id " + taskDto.getId() + " was not found.")))
                 .flatMap(oldTask -> {
                     Task newTask = taskToDtoConverter.updateEntity(oldTask, taskDto);
                     return taskRepository.save(newTask);
@@ -92,11 +97,19 @@ public class TaskService {
 
     }
 
+    @Transactional
     public Mono<Task> changeStatus(long taskId, long statusId) {
-        return taskRepository.updateStatus(taskId, statusId);
+        return taskRepository.updateStatus(taskId, statusId)
+                .switchIfEmpty(Mono.error(new BadRequestException(
+                        "Task with id " + taskId + " was not found.")))
+                .then(taskRepository.findById(taskId));
     }
 
-    public Mono<Task> changeAssignee(long taskId, @Nullable Long assigneeId) {
-        return taskRepository.setAssignee(taskId, assigneeId);
+    @Transactional
+    public Mono<Task> changeAssignee(long taskId, @Nullable String assignee) {
+        return taskRepository.setAssignee(taskId, assignee)
+                .switchIfEmpty(Mono.error(new BadRequestException(
+                        "Task with id " + taskId + " was not found.")))
+                .then(taskRepository.findById(taskId));
     }
 }
