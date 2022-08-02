@@ -1,0 +1,30 @@
+server:
+  compression:
+    enabled: true
+    mime-types: text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json
+    min-response-size: 1024
+  http2:
+    enabled: true
+
+spring:
+  liquibase:
+    url: ${yatt.db.url}
+    user: ${yatt.db.username}
+    password: ${yatt.db.password}
+    change-log: classpath:db/changelog/db.changelog-master.xml
+  r2dbc:
+    url: ${yatt.db.r2db-url}
+    username: ${yatt.db.username}
+    password: ${yatt.db.password}
+    properties:
+      schema: yatt
+    pool:
+      enabled: true
+      initial-size: 10
+      max-idle-time: 1m
+      max-size: 30
+
+#springdoc:
+#  swagger-ui:
+#    use-root-path: true
+#    path: /swagger/ui.html

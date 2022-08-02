@@ -1,0 +1,17 @@
+server:
+  port: 8081
+
+environment: dev
+environmentJvmArgs: -Dspring.profiles.active=dev
+
+yatt:
+  db:
+    r2db-url: r2dbc:postgresql://localhost:5430/yatt
+    url: jdbc:postgresql://localhost:5430/yatt
+    username: usr
+    password: pwd
+
+logging:
+  level:
+    web: DEBUG
+
