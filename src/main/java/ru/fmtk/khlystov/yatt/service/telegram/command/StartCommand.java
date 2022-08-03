@@ -23,6 +23,9 @@ public class StartCommand extends ServiceCommand {
     @Override
     public void executeCommand(User user, String userName, Chat chat, List<String> arguments,
                                Consumer<String> sender) {
+        if (user.getIsBot()) {
+            sender.accept("Бот не может быть зарегистрирован в системе.");
+        }
         ru.fmtk.khlystov.yatt.domain.User domainUser =
                 userService.findOrCreateUserByTelegramId(user.getId(), userName)
                         .block();
