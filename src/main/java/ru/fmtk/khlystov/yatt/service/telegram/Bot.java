@@ -76,6 +76,6 @@ public class Bot extends TelegramLongPollingCommandBot {
 
     private void register(@NonNull BotCommand botCommand) {
         super.register(botCommand);
-        log.debug("Registered command " + botCommand);
+        log.debug("Registered command " + botCommand.getCommandIdentifier() + " (" + botCommand.getDescription() + ")");
     }
 }

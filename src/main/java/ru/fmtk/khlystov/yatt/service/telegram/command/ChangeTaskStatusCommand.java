@@ -3,7 +3,6 @@ package ru.fmtk.khlystov.yatt.service.telegram.command;
 import java.util.List;
 import java.util.function.Consumer;
 
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Chat;
@@ -12,15 +11,13 @@ import ru.fmtk.khlystov.yatt.service.TaskService;
 import ru.fmtk.khlystov.yatt.service.converter.TaskToStringConverter;
 
 @Component
-@Slf4j
-public class ShowTaskCommand extends ServiceCommand {
+public class ChangeTaskStatusCommand extends ServiceCommand {
 
     private final TaskService taskService;
     private final TaskToStringConverter taskToStringConverter;
 
-
-    public ShowTaskCommand(TaskService taskService, TaskToStringConverter taskToStringConverter) {
-        super("task", "Показать информацию о задаче");
+    public ChangeTaskStatusCommand(TaskService taskService, TaskToStringConverter taskToStringConverter) {
+        super("status", "Изменить статус задачи");
         this.taskService = taskService;
         this.taskToStringConverter = taskToStringConverter;
     }
@@ -28,17 +25,16 @@ public class ShowTaskCommand extends ServiceCommand {
     @Override
     public void executeCommand(User user, String userName, Chat chat, List<String> arguments,
                                Consumer<String> sender) {
-        if (arguments == null || arguments.size() < 1 || StringUtils.isBlank(arguments.get(0))) {
-            sender.accept("Необходимо указать номер задачи как параметр команды");
+        if (arguments == null || arguments.size() < 2 || StringUtils.isBlank(arguments.get(0))
+                || StringUtils.isBlank(arguments.get(1))) {
+            sender.accept("Необходимо указать номер задачи и имя статуса как параметры команды");
             return;
         }
         final long taskId = Long.parseLong(arguments.get(0));
-        String taskDescr = taskService.findById(taskId)
-                .map(taskToStringConverter::getFullDescription)
+        final String statusName = arguments.get(1);
+        String taskDescr = taskService.changeStatusByName(taskId, statusName)
+                .flatMap(taskToStringConverter::getFullDescription)
                 .block();
-        if (StringUtils.isBlank(taskDescr)) {
-            taskDescr = "Задачи с номером " + taskId + " не существует.";
-        }
-        sender.accept(taskDescr);
+        sender.accept("Статус задачи № " + taskId + " успешно изменен.\n" + taskDescr);
     }
 }

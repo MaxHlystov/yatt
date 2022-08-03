@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.fmtk.khlystov.yatt.domain.Task;
+import ru.fmtk.khlystov.yatt.domain.User;
 import ru.fmtk.khlystov.yatt.dto.CreateTaskDto;
 import ru.fmtk.khlystov.yatt.dto.TaskDto;
 import ru.fmtk.khlystov.yatt.dto.TaskFilterDto;
@@ -58,28 +59,18 @@ public class TaskService {
 
     @Transactional
     public Mono<Task> create(@NonNull String createTaskUid, @NonNull CreateTaskDto taskDto) {
-        if (StringUtils.isBlank(createTaskUid)) {
-            return Mono.error(new BadRequestException("You have to specify create task uid to distinct different" +
-                    " creations"));
-        }
-        return idempotenceService.isExistsOrStore(createTaskUid)
-                .flatMap(isExists -> {
-                    if (isExists) {
-                        return Mono.error(new BadRequestException("Creation with uid " + createTaskUid +
-                                " already exists."));
-                    }
-                    return userRepository.findUserByName(taskDto.getCreatorName())
-                            .switchIfEmpty(Mono.error(new BadRequestException("User with name " +
-                                    taskDto.getCreatorName() + " was not found.")))
-                            .flatMap(user -> taskRepository.save(
-                                    Task.builder()
-                                            .name(taskDto.getName())
-                                            .statusId(1L)
-                                            .description(taskDto.getDescription())
-                                            .createdAt(timeService.getDateTime())
-                                            .createdBy(user.getId())
-                                            .build()));
-                });
+        return userRepository.findUserByName(taskDto.getCreatorName())
+                .switchIfEmpty(Mono.error(new BadRequestException("User with name " +
+                        taskDto.getCreatorName() + " was not found.")))
+                .flatMap(user -> create(createTaskUid, user.getId(), taskDto));
+    }
+
+    @Transactional
+    public Mono<Task> createFromTelegram(@NonNull String createTaskUid, long userTelegramId, CreateTaskDto taskDto) {
+        return getUserByTelegramId(userTelegramId)
+                .flatMap(user -> create(createTaskUid, user.getId(), taskDto))
+                .switchIfEmpty(Mono.defer(() -> create(createTaskUid, taskDto)));
+
     }
 
     public Mono<Void> delete(long taskId) {
@@ -110,6 +101,18 @@ public class TaskService {
     }
 
     @Transactional
+    public Mono<Task> changeStatusByName(long taskId, String statusName) {
+        return statusRepository.findByNameOrDescription(statusName, statusName)
+                .switchIfEmpty(Mono.error(new BadRequestException(
+                        "Status with name " + statusName + " was not found.")))
+                .flatMap(status ->
+                        taskRepository.updateStatus(taskId, status.getId())
+                                .switchIfEmpty(Mono.error(new BadRequestException(
+                                        "Task with id " + taskId + " was not found.")))
+                                .then(taskRepository.findById(taskId)));
+    }
+
+    @Transactional
     public Mono<Task> changeAssigneeByName(long taskId, @Nullable String assignee) {
         return taskRepository.setAssigneeByName(taskId, assignee)
                 .switchIfEmpty(Mono.error(new BadRequestException(
@@ -122,7 +125,7 @@ public class TaskService {
     }
 
     public Flux<Task> findByUserTelegramIdAndStatus(long userTelegramId, String statusName) {
-        return userRepository.findUserByTelegramId(userTelegramId)
+        return getUserByTelegramId(userTelegramId)
                 .zipWith(statusRepository.findByNameOrDescription(statusName, statusName))
                 .flatMapMany(userAndStatus ->
                         taskRepository.findAllByAssigneeIdAndStatusId(
@@ -135,12 +138,38 @@ public class TaskService {
     }
 
     public Mono<Boolean> changeAssigneeByTelegramUserId(long taskId, Long userTelegramId) {
-        return userRepository.findUserByTelegramId(userTelegramId)
-                .switchIfEmpty(Mono.error(new IllegalArgumentException("You need to register before take a task")))
+        return getUserByTelegramId(userTelegramId)
                 .flatMap(user ->
                         taskRepository.setAssigneeById(taskId, user.getId())
                                 .then(Mono.just(true))
                                 .switchIfEmpty(Mono.just(false))
                 );
+    }
+
+    private Mono<User> getUserByTelegramId(Long userTelegramId) {
+        return userRepository.findUserByTelegramId(userTelegramId)
+                .switchIfEmpty(Mono.error(new IllegalArgumentException("You need to register before take a task")));
+    }
+
+    private Mono<Task> create(@NonNull String createTaskUid, long userId, @NonNull CreateTaskDto taskDto) {
+        if (StringUtils.isBlank(createTaskUid)) {
+            return Mono.error(new BadRequestException("You have to specify create task uid to distinct different" +
+                    " creations"));
+        }
+        return idempotenceService.isExistsOrStore(createTaskUid)
+                .flatMap(isExists -> {
+                    if (isExists) {
+                        return Mono.error(new BadRequestException("Creation with uid " + createTaskUid +
+                                " already exists."));
+                    }
+                    return taskRepository.save(
+                            Task.builder()
+                                    .name(taskDto.getName())
+                                    .statusId(1L)
+                                    .description(taskDto.getDescription())
+                                    .createdAt(timeService.getDateTime())
+                                    .createdBy(userId)
+                                    .build());
+                });
     }
 }

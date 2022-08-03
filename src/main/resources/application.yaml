@@ -26,7 +26,7 @@ spring:
 
 yatt:
   bot:
-    name: Yet Another Task Tracker Bot
+    name: "@YattYattBot"
 
 #springdoc:
 #  swagger-ui:

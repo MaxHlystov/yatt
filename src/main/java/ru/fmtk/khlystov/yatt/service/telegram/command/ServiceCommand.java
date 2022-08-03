@@ -1,6 +1,9 @@
 package ru.fmtk.khlystov.yatt.service.telegram.command;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
 import org.telegram.telegrambots.extensions.bots.commandbot.commands.BotCommand;
@@ -18,17 +21,23 @@ public abstract class ServiceCommand extends BotCommand {
         super(identifier, description);
     }
 
-    protected abstract void executeCommand(AbsSender absSender, User user, String userName, Chat chat,
-                                           String[] strings, Consumer<String> sender);
+    protected abstract void executeCommand(User user, String userName, Chat chat,
+                                           List<String> arguments, Consumer<String> sender);
 
     @Override
     public void execute(AbsSender absSender, User user, Chat chat, String[] arguments) {
         final String userName = BotUtils.getUserName(user);
         final String debugId = "command '" + this.getCommandIdentifier() + "' for user " + userName +
                 " (" + user.getId() + ")";
-        log.debug("Start " + debugId);
+        log.debug("Start " + debugId + " with arguments: " + Arrays.toString(arguments));
         try {
-            executeCommand(absSender, user, userName, chat, arguments,
+            final List<String> argumentsByQuotes = BotUtils.getArgumentsByQuotes(arguments);
+            log.debug("Parse arguments for command " + debugId + ": " +
+                    argumentsByQuotes.stream()
+                            .map(arg -> "\"" + arg + "\"")
+                            .collect(Collectors.joining(", ")));
+            executeCommand(user, userName, chat,
+                    argumentsByQuotes,
                     (answer) -> sendAnswer(absSender, chat.getId(), this.getCommandIdentifier(), userName, answer));
         } catch (Exception e) {
             log.error("Error when execute " + debugId, e);
