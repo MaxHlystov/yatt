@@ -34,13 +34,13 @@ public class CreateTaskCommand extends ServiceCommand {
     @Override
     public void executeCommand(User user, String userName, Chat chat, List<String> arguments,
                                Consumer<String> sender) {
-        if (arguments == null || arguments.size() < 2 || StringUtils.isBlank(arguments.get(0))) {
+        if (arguments == null || arguments.size() < 1 || StringUtils.isBlank(arguments.get(0))) {
             sender.accept("Необходимо указать название задачи как параметры команды");
             return;
         }
         final String taskName = arguments.get(0);
-        final String description = arguments.get(1);
-        final String uid = generateCreateUid(user.getId());
+        final String description = getDescription(arguments);
+        final String uid = generateCreateUid(user.getId(), taskName);
         final CreateTaskDto taskDto = new CreateTaskDto(taskName, userName, description);
         String taskDescr = taskService.createFromTelegram(uid, user.getId(), taskDto)
                 .flatMap(taskToStringConverter::getFullDescription)
@@ -48,7 +48,15 @@ public class CreateTaskCommand extends ServiceCommand {
         sender.accept("Задача успешно создана:\n" + taskDescr);
     }
 
-    private String generateCreateUid(long userId) {
-        return "Tb_" + userId + "_" + timeService.getDateTime().format(DATE_TIME_FORMATTER);
+    private static String getDescription(List<String> arguments) {
+        if (arguments.size() < 2) {
+            return null;
+        }
+        return arguments.get(1);
+    }
+
+    private String generateCreateUid(long userId, String taskName) {
+        return "Tb_" + userId + "_" + timeService.getDateTime().format(DATE_TIME_FORMATTER) +
+                taskName;
     }
 }

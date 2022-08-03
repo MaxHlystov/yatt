@@ -2,6 +2,7 @@ package ru.fmtk.khlystov.yatt.service.converter;
 
 import java.time.format.DateTimeFormatter;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import ru.fmtk.khlystov.yatt.domain.Task;
@@ -27,11 +28,12 @@ public class TaskToStringConverter {
     }
 
     public String getFullDescription(TaskDto taskDto) {
-        return "Задача №" + taskDto.getId() + " '" + taskDto.getName() + "'\n" +
-                taskDto.getDescription() + "\n" +
-                "Создана " + taskDto.getCreatedAt().format(DATE_FORMATTER) +
-                " " + taskDto.getCreatedBy().getName() +
-                (taskDto.getAssignee() == null ? "" : "\nОтветственный: " + taskDto.getAssignee().getName());
+        String assigneeName = taskDto.getAssignee() == null ? null : taskDto.getAssignee().getName();
+        return "Задача №" + taskDto.getId() + " '" + taskDto.getName() +
+                "'.\nОписание: " + taskDto.getDescription() +
+                ".\nОтветственный: " + (StringUtils.isNotBlank(assigneeName) ? assigneeName : "не назначен") +
+                ".\nСоздана " + taskDto.getCreatedAt().format(DATE_FORMATTER) +
+                " пользователем " + taskDto.getCreatedBy().getName() + ".";
     }
 
     public Mono<String> getFullDescription(Task task) {
