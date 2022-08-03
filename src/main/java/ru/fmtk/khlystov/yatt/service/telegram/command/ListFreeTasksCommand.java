@@ -19,7 +19,7 @@ public class ListFreeTasksCommand extends ServiceCommand {
     private final TaskToStringConverter taskToStringConverter;
 
     public ListFreeTasksCommand(TaskService taskService, TaskToStringConverter taskToStringConverter) {
-        super("list-free", "Получить список задач без отвественного");
+        super("list_free", "Получить список задач без ответственного");
         this.taskService = taskService;
         this.taskToStringConverter = taskToStringConverter;
     }
