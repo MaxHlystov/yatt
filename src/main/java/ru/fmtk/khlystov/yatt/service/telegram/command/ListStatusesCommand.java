@@ -1,7 +1,6 @@
 package ru.fmtk.khlystov.yatt.service.telegram.command;
 
 import java.util.List;
-import java.util.function.Consumer;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -26,7 +25,7 @@ public class ListStatusesCommand extends ServiceCommand {
 
     @Override
     public void executeCommand(User user, String userName, Chat chat, List<String> arguments,
-                               Consumer<String> sender) {
+                               MessageAcceptor sender) {
         List<String> statuses = statusRepository.findAll()
                 .map(ListStatusesCommand::getStatusDescr)
                 .collectList()

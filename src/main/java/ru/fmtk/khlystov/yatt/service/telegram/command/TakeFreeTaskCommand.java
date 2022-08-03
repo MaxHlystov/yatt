@@ -1,7 +1,6 @@
 package ru.fmtk.khlystov.yatt.service.telegram.command;
 
 import java.util.List;
-import java.util.function.Consumer;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -23,9 +22,9 @@ public class TakeFreeTaskCommand extends ServiceCommand {
 
     @Override
     public void executeCommand(User user, String userName, Chat chat, List<String> arguments,
-                               Consumer<String> sender) {
+                               MessageAcceptor sender) {
         if (arguments == null || arguments.size() < 1 || StringUtils.isBlank(arguments.get(0))) {
-            sender.accept("Необходимо указать номер задачи как параметр команды");
+            sender.error("Необходимо указать номер задачи как параметр команды");
             return;
         }
         final long taskId = Long.parseLong(arguments.get(0));

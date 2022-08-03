@@ -15,6 +15,7 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import ru.fmtk.khlystov.yatt.service.telegram.command.NonCommand;
 import ru.fmtk.khlystov.yatt.service.telegram.command.ServiceCommand;
+import ru.fmtk.khlystov.yatt.service.telegram.keyboard.BaseKeyboardCreator;
 
 @Slf4j
 @Service
@@ -25,20 +26,30 @@ public class Bot extends TelegramLongPollingCommandBot {
 
     private final NonCommand nonCommand;
 
+    private final BotCommandsMetaStore botCommandsMetaStore;
+    private final BaseKeyboardCreator baseKeyboardCreator;
+
     public Bot(@Value("${yatt.bot.name}") String botName,
                @Value("${yatt.bot.token}") String botToken,
                NonCommand nonCommand,
-               List<ServiceCommand> commands) {
+               List<ServiceCommand> commands,
+               BotCommandsMetaStore botCommandsMetaStore,
+               BaseKeyboardCreator baseKeyboardCreator) {
         super();
 
         this.botName = botName;
         this.botToken = botToken;
         this.nonCommand = nonCommand;
+        this.botCommandsMetaStore = botCommandsMetaStore;
+        this.baseKeyboardCreator = baseKeyboardCreator;
 
         log.debug("Start to register commands: " + commands.stream()
                 .map(ServiceCommand::getCommandIdentifier)
                 .collect(Collectors.joining(", ")));
-        commands.forEach(this::register);
+        commands.forEach(command -> {
+            this.register(command);
+            botCommandsMetaStore.registerCommand(command.getCommandIdentifier(), command);
+        });
         log.debug("Bot started");
     }
 
@@ -66,6 +77,7 @@ public class Bot extends TelegramLongPollingCommandBot {
         SendMessage answer = new SendMessage();
         answer.setText(text);
         answer.setChatId(chatId);
+        answer.setReplyMarkup(baseKeyboardCreator.getMenuKeyboard(BotCommandsMetaStore.getNewUserCommands(), 2));
         try {
             execute(answer);
         } catch (TelegramApiException e) {

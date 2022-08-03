@@ -1,7 +1,6 @@
 package ru.fmtk.khlystov.yatt.service.telegram.command;
 
 import java.util.List;
-import java.util.function.Consumer;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -27,9 +26,9 @@ public class ListUserTasksCommand extends ServiceCommand {
 
     @Override
     public void executeCommand(User user, String userName, Chat chat, List<String> arguments,
-                               Consumer<String> sender) {
+                               MessageAcceptor sender) {
         if (arguments == null || arguments.size() < 1 || StringUtils.isBlank(arguments.get(0))) {
-            sender.accept("Необходимо указать статус задачи как параметр команды");
+            sender.error("Необходимо указать статус задачи как параметр команды");
             return;
         }
         final String statusName = arguments.get(0);

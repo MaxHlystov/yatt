@@ -2,7 +2,6 @@ package ru.fmtk.khlystov.yatt.service.telegram.command;
 
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.function.Consumer;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
@@ -34,9 +33,9 @@ public class CreateTaskCommand extends ServiceCommand {
 
     @Override
     public void executeCommand(User user, String userName, Chat chat, List<String> arguments,
-                               Consumer<String> sender) {
+                               MessageAcceptor sender) {
         if (arguments == null || arguments.size() < 1 || StringUtils.isBlank(arguments.get(0))) {
-            sender.accept("Необходимо указать название задачи как параметры команды");
+            sender.error("Необходимо указать название задачи как параметры команды");
             return;
         }
         final String taskName = arguments.get(0);

@@ -1,24 +1,24 @@
 package ru.fmtk.khlystov.yatt.service.telegram.command;
 
 import java.util.List;
-import java.util.function.Consumer;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.User;
+import ru.fmtk.khlystov.yatt.service.telegram.keyboard.BaseKeyboardCreator;
 
 @Slf4j
 @Component
-public class HelpCommand extends ServiceCommand {
+public class HelpCommand extends ServiceCommandWithKeyboard {
 
-    public HelpCommand() {
-        super("help", "Помощь");
+    public HelpCommand(BaseKeyboardCreator baseKeyboardCreator) {
+        super("help", "Помощь", baseKeyboardCreator);
     }
 
     @Override
     public void executeCommand(User user, String userName, Chat chat, List<String> arguments,
-                               Consumer<String> sender) {
+                               MessageAcceptor sender) {
         sender.accept("""
                 Этот бот предназначен для управления задачами
 
