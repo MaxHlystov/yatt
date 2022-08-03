@@ -16,7 +16,8 @@ import ru.fmtk.khlystov.yatt.service.converter.TaskToStringConverter;
 @Component
 public class CreateTaskCommand extends ServiceCommand {
 
-    private final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+    private static final int UID_MAX_LENGTH = 100;
+    private final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMddHHmm");
 
     private final TaskService taskService;
     private final TimeService timeService;
@@ -56,7 +57,8 @@ public class CreateTaskCommand extends ServiceCommand {
     }
 
     private String generateCreateUid(long userId, String taskName) {
-        return "Tb_" + userId + "_" + timeService.getDateTime().format(DATE_TIME_FORMATTER) +
-                taskName;
+        return StringUtils.left(
+                userId + "_" + timeService.getDateTime().format(DATE_TIME_FORMATTER) + taskName,
+                UID_MAX_LENGTH);
     }
 }

@@ -17,5 +17,6 @@
     <include file="db/changelog/2022-07-31-add-task-table.sql"/>
     <include file="db/changelog/2022-08-02-add-create_task_uid-table.sql"/>
     <include file="db/changelog/2022-08-02-add-telegram_id-to-user-table.sql"/>
+    <include file="db/changelog/2022-08-03-change-idempotence-uid-field.sql"/>
 
 </databaseChangeLog>
