@@ -32,6 +32,7 @@ public class TaskToStringConverter {
         return "Задача №" + taskDto.getId() + " '" + taskDto.getName() +
                 "'.\nОписание: " + taskDto.getDescription() +
                 ".\nОтветственный: " + (StringUtils.isNotBlank(assigneeName) ? assigneeName : "не назначен") +
+                ".\nСтатус: " + taskDto.getStatus() +
                 ".\nСоздана " + taskDto.getCreatedAt().format(DATE_FORMATTER) +
                 " пользователем " + taskDto.getCreatedBy().getName() + ".";
     }
