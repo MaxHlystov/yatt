@@ -10,11 +10,9 @@ public class UserService {
 
     private final UserRepository userRepository;
 
-
     public UserService(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
-
 
     public Mono<User> findOrCreateUserByTelegramId(long telegramId, String userName) {
         return userRepository.findUserByTelegramId(telegramId)
